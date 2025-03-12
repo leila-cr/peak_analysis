@@ -1,10 +1,10 @@
 # Proyecto de Automatización para la Identificación de Sitios de Unión de Factores de Transcripción en E. coli en experimentos de ChIP-Seq
 
-Fecha: [dd/mm/yyyy]
+Fecha: [dd/03/2025]
 
 Participantes: 
 
-- [nombre]  <email: > 
+- [Leilani Cruz Ramírez]  <email:leilanic@lcg.unam.mx> 
 
 ## Descripción del Problema
 <!-- Puedes empezar con una introducción, luego la justificación y plantear el problema. -->
@@ -12,7 +12,6 @@ Participantes:
 El proyecto busca automatizar la extracción y el análisis de secuencias genómicas donde los factores de transcripción se unen en _Escherichia coli_. Se cuenta con un archivo que contiene información sobre los picos de unión, y con otro archivo que posee la secuencia completa del genoma. El objetivo es generar archivos FASTA específicos para cada factor de transcripción (TF), agrupando las secuencias de los picos de unión correspondientes. Posteriormente, estas secuencias serán analizadas mediante el software `meme` para identificar motivos, para eso se tiene que generar un script shell con todas las instrucciones `meme` usando las secuencias fasta de los picos de cada TF.
 
 ## Especificación de Requisitos
-
 
 ### Requisitos Funcionales:
 
@@ -24,35 +23,50 @@ El proyecto busca automatizar la extracción y el análisis de secuencias genóm
         -   Archivo de picos que contiene la información de las regiones de unión de cada factor de transcripción (ver sección "Archivo de Picos" al final de la sección de requisitos).
         -   Archivo de la secuencia del genoma de _E. coli_ en formato FASTA.
     -   Añadir un argumento para especificar el directorio de salida donde se almacenarán los archivos generados.
-2.  **Extracción y Procesamiento de Secuencias:**
+      
+2.  **Manejo de errores**
+    -  Verificación de los archivos iniciales (formato, contenido,etc)
+        - Confirmación sobre la existencia tanto del archivo de picos como el FASTA del genoma, ademas de encontrarse en un formato adecuado (establecer que formatos seran aceptados), para poder hacer la extracción de secuencias, en caso de no ser así retornar para posteriormente realizar un correcto analisis y prevenir posibles problemas 
+    
+      
+3.  **Extracción y Procesamiento de Secuencias:**
     
     -   Leer el archivo de picos para obtener las posiciones de inicio y fin de los picos asociados a cada `TF_name`.
+    -   Confirmar que las coordenadas de inicio y de fin de los picos esten dentro del rango de la secuencia del genoma
     -   Extraer las secuencias desde el archivo FASTA del genoma utilizando las coordenadas `Peak_start` y `Peak_end`, asegurándose de considerar solamente la cadena forward.
-3.  **Generación de Archivos FASTA:**
+      
+4.  **Generación de Archivos FASTA:**
     
     -   Crear archivos FASTA individuales para cada `TF_name`. Los nombres de los archivos deben coincidir con el `TF_name` y usar la extensión `.fa`.
     -   Almacenar estos archivos en el directorio de salida especificado.
-    
-
+      
 
 #### B. *Automatización del Análisis de Motivos:**
     
      
 1.  **Entrada de Directorio:**
     - Archivos con las secuencias de dna de los picos de cada TF.
-    
-2.  **Generación de Script de Automatización:**
+      
+2. **Manejo de errores**
+   - Verificación de los FASTA creados
+       - Asegurarse de que estos archivos son válidos antes de usarlos para el análisis de motivos por medio de MEME, como lo es que no esten vacios, que las secuencias esten en orden completo, etc.
+       - Si un archivo esta vacio o es incorrecto, se detiene el proceso
+       
+3.  **Generación de Script de Automatización:**
     
     -   Iterar sobre cada archivo FASTA en el directorio proporcionado.
-    -   Para cada archivo, debe generar una línea de comando para el software `meme`, ajustada para ejecutar el análisis de motivos con los parámetros predefinidos.
+    -   Para cada archivo, debe generar una línea de comando para el software `meme`, ajustada para ejecutar el análisis de motivos con los parámetros.
+    -   Agregar la posibilidad de establecer parametros flexibles que se puedan configurar, por ejemplo, la cantidad de motivos se quisiera encontrar
     
-3.  **Salida del Script:**
+4.  **Salida del Script:**
     
     -   El módulo debe generar un script de shell que contiene todas las líneas de comandos necesarias para ejecutar `meme` en cada archivo FASTA.
     -   Este script debe grabarse en el directorio de trabajo actual con un nombre predefinido, como `run_meme.sh`.
     
 
 ### **Requisitos No Funcionales:**
+-   **Lenguaje de programación:**
+    -  Emplear un estandar de codificación por ejemplo PEP8 (para python), que permita mejorar la legibilidad del programa.
 
 -   **Portabilidad y Usabilidad:**
     
@@ -133,12 +147,16 @@ Este archivo contiene información crucial sobre las regiones de unión de los 1
     
     -   Cargar el archivo de picos y el archivo FASTA del genoma.
     -   Obtener el directorio de salida desde la línea de comandos.
-2.  **Procesamiento de Datos:**
+      
+2.  **Manejo de errores:**
+    - Al momento de cargar los archivos se debe de verificar que estos existen
+    - Identificación del tipo de formato de los archivos,  
+3.  **Procesamiento de Datos:**
     
     -   Leer cada fila del archivo de picos.
     -   Extraer los campos `TF_name`, `Peak_start`, `Peak_end` para cada entrada.
     -   Para cada `TF_name`, usar las posiciones `Peak_start` y `Peak_end` para extraer la secuencia correspondiente del archivo FASTA del genoma.
-3.  **Generación de FASTA:**
+4.  **Generación de FASTA:**
     
     -   Agrupar las secuencias extraídas por `TF_name`.
     -   Crear un archivo FASTA por cada `TF_name` en el directorio de salida con la misma estructura `<TF_name>.fa`.
@@ -149,14 +167,15 @@ Este archivo contiene información crucial sobre las regiones de unión de los 1
 ```
 1. Inicio
 2. Leer archivo de picos
-3. Para cada registro:
+3. Durante su lectura se validación 
+4. Para cada registro:
    a. Obtener TF_name, Peak_start, Peak_end
    b. Extraer secuencia del genoma usando Peak_start y Peak_end
    c. Agrupar secuencias por TF_name
-4. Por cada TF_name:
+5. Por cada TF_name:
    a. Crear archivo FASTA
    b. Escribir secuencias en archivo
-5. Fin
+6. Fin
 ```
 
 #### Módulo 2: Automatizador del Análisis con `meme`
@@ -166,8 +185,10 @@ Este archivo contiene información crucial sobre las regiones de unión de los 1
 **Flujo de Trabajo:**
 
 1.  **Lectura de Entradas:**
-    
     - Directorio con archivos fasta.
+      
+2.  **Manejo de errores**
+   - Confirmacion de que los archivos estan presentes y se puede trabajar con la informacion en estos
     
 2.  **Generación de Comandos:**
     
@@ -183,11 +204,13 @@ Este archivo contiene información crucial sobre las regiones de unión de los 1
 ```plaintext
 1. Inicio
 2. Leer todos los archivos FASTA en el directorio
-3. Para cada archivo FASTA:
-   a. Formar comando: meme <archivo_fasta> -oc <nombre_directorio> ... 
+3. Validacion de los archivos para que se pueda trabajar correctamente
+4. Para cada archivo FASTA:
+   a. Formar comando de ejecucion: meme <archivo_fasta> -oc <nombre_directorio> ...
+   b. Incluye la elaboracion de parametros flexibles y que permitan hacer modificaiones del codigo en el scrip
    b. Imprimir comando
-4. Redireccionar salida a un archivo script: run_meme.sh
-5. Fin
+5. Redireccionar salida a un archivo script: run_meme.sh
+6. Fin
 ```
 
 
