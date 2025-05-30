@@ -92,9 +92,8 @@ peaks_path = "./../data/union_peaks_file.tsv"
 peaks_data = leer_archivo_picos(peaks_path)
 
 
-output_dir = "./../results/fasta_por_tf"
-sequence_for_tf = extraer_secuencias(peaks_data, genoma)
+output_dir = "./../results"
+sequence_for_tf= extraer_secuencias(peaks_data, genoma)
+guardar_fasta_por_tf(sequence_for_tf,output_dir)
 #print(f"Se extrajeron secuencias para {len(sequence_for_tf)} factores de transcripción.")
-
-
 
