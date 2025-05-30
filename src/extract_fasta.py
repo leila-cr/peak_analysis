@@ -1,99 +1,124 @@
-#Cargar el archivo FASTA del genoma
-def cargar_genoma(fasta_path):
-    """Carga el genoma desde un archivo FASTA y devuelve una única cadena de texto."""
-    genome = "" #Variable donde se va a concatenar toda la secuencia de nucleotidos
-   
-    with open(fasta_path, "r") as infile:
-         file_is_fasta = False   
-         for line in infile:  #Se itera sobre cada linea del archivo
-            line = line.strip()
-            if line.startswith(">"):
-                file_is_fasta = True #Validacion del archivo en formato FASTA
-            elif file_is_fasta:
-                genome += line.upper() #Se van concatenando las lineas para obtener la cadena
+import os
+import argparse
 
-    if not file_is_fasta: #En caso que no se encontro '>'
-        print(f"El archivo {fasta_path} no es compatible")
+
+def cargar_genoma(ruta_fasta):
+    """
+    Carga el genoma desde un archivo FASTA y devuelve una unica cadena de texto.
+    """
+    nucleotidos = "" # Variable para concatenar la secuencia de nucleotidos
+    
+    with open(ruta_fasta, "r") as archivo:
+         es_fasta = False   
+         for linea in archivo:  # Se itera sobre cada linea del archivo
+            linea = linea.strip()
+            if linea.startswith(">"):
+                es_fasta = True # Validacion del archivo en formato FASTA
+            elif es_fasta:
+                nucleotidos += linea.upper() # Concatenacion de las lineas de secuencia
+
+    if not es_fasta: 
+        print(f"El archivo {ruta_fasta} no es compatible")
         return None
     
-    #print(f"Cantidad de bases:{len(genome)} en el genoma.") VERIFICANDO CANTIDAD DE NUCLEOTIDOS
-    return genome
+    return nucleotidos
 
 
-#Cargar archivo picos de union
-def leer_archivo_picos(peaks_path): 
-    """Lee el archivo de picos y devuelve una lista de diccionarios con TF_name, start y end."""
-    peaks = [] #Lista para guardar la informacion de los picos
-   
+def leer_archivo_picos(ruta_picos):
+    """
+    Lee el archivo de picos y devuelve una lista de diccionarios con TF_name, start y end.
+    """
+    picos = [] # Variable que guardara la lista de diccionarios 
 
-    with open(peaks_path, "r") as infile:
-        first_line = True #Para identificar el encabezado
-        for line in infile:
-            if first_line:#No tomar en cuenta la linea del encabezado
-                first_line = False
+    with open(ruta_picos, "r") as archivo:
+        encabezado = True  # Identificacion del encabezado
+        for linea in archivo:
+            if encabezado: 
+                encabezado = False
                 continue
 
-            if line.strip():#Verificar si el archivo esta vacio, si se genera una lista vacia
-                column = line.strip().split("\t")
-
-                if len(column) >= 3:#Para poder obtener la info se necesita al menos las 3 columnas que buscamos
-                    tf_name = column[2] 
-                    start = int(float(column[3])) #Se pasan a valores numericos para poder trabajar con ellos
-                    end = int(float(column[4]))
-                    peaks.append({"TF": tf_name, "start": start, "end": end})#Se guarda diccionarios en la lista vacia 
+            if linea.strip(): #Verificacion si  archivo esta vacio
+                columnas = linea.strip().split("\t")
+                if len(columnas) >= 3: # Identificacion al menos de 3 columnas para trabajar
+                    nombre_tf = columnas[2] 
+                    inicio = int(float(columnas[3])) 
+                    final = int(float(columnas[4]))
+                    picos.append({
+                        "TF": nombre_tf, 
+                        "start": inicio, 
+                        "end": final
+                    })
                           
-    if not peaks:#Si el archivo despues de leerse sigue vacio
-        print(f"El archivo {peaks_path} esta vacio.")
+    if not picos:
+        print(f"El archivo {ruta_picos} esta vacio.")
         return None
-    #print(f"Se han cargado {len(peaks)} picos correctamente.")
+   
+    return picos
 
-    return peaks
 
+def extraer_secuencias(picos_data, genoma):
+    """
+    Agrupa las secuencias extraídas por TF_name en un diccionario
+    """
+    secuencias_por_tf = {} # Diccionario donde se agruparan TF_name
 
-def extraer_secuencias(peaks_data, genoma):
-    """Agrupa las secuencias extraídas por TF_name en un diccionario."""
-    tf_sequences = {} #Diccionario donde se agruparan TF_name
+    for pico in picos_data: # Iteracion soble la lista de diccionarios de picos 
+        nombre_tf = pico["TF"]
+        inicio = pico["start"]
+        final = pico["end"]
+        secuencia = genoma[inicio:final]
 
-    for peak in peaks_data: #Se itera soble la lista de diccionarios de picos registrados
-        tf_name = peak["TF"]
-        start = peak["start"]
-        end = peak["end"]
-        sequence = genoma[start:end]
+        if nombre_tf not in secuencias_por_tf: # Reconocimiento de los sitios de union
+            secuencias_por_tf[nombre_tf] = []
 
-        if tf_name not in tf_sequences: #Reconocimiento de los sitios de union, filtrando los demas nucleotidos
-            tf_sequences[tf_name] = []
-
-        tf_sequences[tf_name].append(sequence)
+        secuencias_por_tf[nombre_tf].append(secuencia)
     
-    return tf_sequences
-
-def guardar_fasta_por_tf(sequence_for_tf, output_dir):
-    """Guarda archivos FASTA separados por cada TF_name."""
-
-    for tf_name in sequence_for_tf:#IteraR sobre cada factor esta en el diccionario
-        file_path = output_dir + "/" + tf_name + ".fasta"#Creacion de los archivos FASTA
-        outfile = open(file_path, "w")
-
-        for i, sequence in enumerate(sequence_for_tf[tf_name]):
-            outfile.write(">peak_" + str(i+1) + "\n")#Se escribe la primera linea del archivo fasta '>'
-            outfile.write(sequence + "\n")#Se escribe la secuencia que corresponde al factor
-
-        outfile.close()  # Cerrar archivo después de escribir
-
-    print("FASTA guardados.")
+    return secuencias_por_tf
 
 
-#Llamado a las funciones
-fasta_path = "./../data/E_coli_K12_MG1655_U00096.3.txt"
-genoma = cargar_genoma(fasta_path)
-        
+def guardar_fasta_por_tf(secuencias_por_tf, ruta_salida):
+    """
+    Guarda archivos FASTA separados por cada TF_name
+    """
+    for nombre_tf in secuencias_por_tf: 
+        ruta_archivo = ruta_salida + "/" + nombre_tf + ".fasta" # Creacion de los archivos FASTA por cada TF
+        archivo = open(ruta_archivo, "w")
 
-peaks_path = "./../data/union_peaks_file.tsv"
-peaks_data = leer_archivo_picos(peaks_path)
+        for i, secuencia in enumerate(secuencias_por_tf[nombre_tf]):
+            archivo.write(">peak_" + str(i+1) + "\n") # Estructura de la primera linea del archivo fasta '>'
+            archivo.write(secuencia + "\n") # Se escribe la secuencia que corresponde al factor
+
+        archivo.close()  
+
+    print("Archivos FASTA guardados correctamente.")
 
 
-output_dir = "./../results"
-sequence_for_tf= extraer_secuencias(peaks_data, genoma)
-guardar_fasta_por_tf(sequence_for_tf,output_dir)
-#print(f"Se extrajeron secuencias para {len(sequence_for_tf)} factores de transcripción.")
+def main():
+    parser = argparse.ArgumentParser(description="Procesamiento de los archivos de entrada (FASTA y tsv)")
+    parser.add_argument("--fasta", required=True, help="Ruta del archivo FASTA de entrada")
+    parser.add_argument("--tsv", required= True, help="Ruta del archivo TSV de entrada")
+    parser.add_argument("--resultados", required= True, help="Directorio donde se guardaran los archivos FASTA por cada TF")
+
+    args = parser.parse_args()
+
+    ruta_fasta = args.fasta
+    ruta_picos = args.tsv
+    ruta_salida = args.resultados
+
+    if not os.path.exists(ruta_salida):
+        os.makedirs(ruta_salida)
+
+    genoma = cargar_genoma(ruta_fasta)
+    if genoma is None:
+        return
+    
+    picos_data =leer_archivo_picos(ruta_picos)
+    if picos_data is None:
+        return
+    secuencias_por_tf = extraer_secuencias(picos_data, genoma)
+    guardar_fasta_por_tf(secuencias_por_tf, ruta_salida)
+
+
+if __name__ == "__main__":
+    main()
 
