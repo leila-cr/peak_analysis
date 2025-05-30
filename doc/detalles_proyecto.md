@@ -1,15 +1,12 @@
 # Proyecto de Automatización para la Identificación de Sitios de Unión de Factores de Transcripción en E. coli en experimentos de ChIP-Seq
 
-Fecha: [dd/03/2025]
-
-Participantes: 
-
-- [Leilani Cruz Ramírez]  <email:leilanic@lcg.unam.mx> 
+Fecha: [30/05/2025]
+Participantes: [Leilani Cruz Ramírez]  <email:leilanic@lcg.unam.mx> 
 
 ## Descripción del Problema
 <!-- Puedes empezar con una introducción, luego la justificación y plantear el problema. -->
 
-El proyecto busca automatizar la extracción y el análisis de secuencias genómicas donde los factores de transcripción se unen en _Escherichia coli_. Se cuenta con un archivo que contiene información sobre los picos de unión, y con otro archivo que posee la secuencia completa del genoma. El objetivo es generar archivos FASTA específicos para cada factor de transcripción (TF), agrupando las secuencias de los picos de unión correspondientes. Posteriormente, estas secuencias serán analizadas mediante el software `meme` para identificar motivos, para eso se tiene que generar un script shell con todas las instrucciones `meme` usando las secuencias fasta de los picos de cada TF.
+El proyecto busca automatizar la extracción y el análisis de secuencias genómicas donde los factores de transcripción se unen en _Escherichia coli_. Se cuenta con un archivo que contiene información sobre los picos de unión, y con otro archivo que posee la secuencia completa del genoma. El objetivo es generar archivos FASTA específicos para cada factor de transcripción (TF), agrupando las secuencias de los picos de unión correspondientes. Posterior, estas secuencias serán analizadas mediante el software `meme` para identificar motivos.
 
 ## Especificación de Requisitos
 

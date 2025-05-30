@@ -54,11 +54,11 @@ ls
 log.out
 fasta_peaks/
 ```
-4.  **Caso:Archivos FASTA correspondientes de cada TF se encuentre vaccio.**
-   **Entradas:**
+4.  **Caso:Archivos FASTA correspondientes de cada TF se encuentre vacio.**
+    -   **Entradas:**
         -  Archivo de picos válido.
         - Archivo FASTA del genoma válido.
-         -Directorio de salida válido.
+        -Directorio de salida válido.
         - Archivo FASTA de  algun TF se encuentra vacio, sin secuencias o con errores de formato.
         - Comando del script se ejecuta ya que el directorio de entrada es valido
         
